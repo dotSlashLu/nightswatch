@@ -1,35 +1,36 @@
+// Nightswatch agent plugins interface
 package raven_interface
 
 type ReportType int
 type ReportValueType int
 
 const (
-    ReportGroup ReportType = iota
-    ReportSingle
+	ReportGroup ReportType = iota
+	ReportSingle
 )
 
 const (
-    ReportValStr 	ReportValueType = iota
-    ReportValFloat
-    ReportValInt
+	ReportValStr ReportValueType = iota
+	ReportValFloat
+	ReportValInt
 )
 
 type Report struct {
-    Key string
-    ValueType ReportValueType
-    Value interface{}
+	Key       string
+	ValueType ReportValueType
+	Value     interface{}
 }
 
 type PluginReport struct {
-    PluginName string
-    ReportType ReportType
-    // either *Report{} or []*Report
-    Report interface{}
+	PluginName string
+	ReportType ReportType
+	// either *Report{} or []*Report
+	Report interface{}
 }
 
 type Plugin struct {
-	Name string
-	Ch chan *PluginReport
+	Name  string
+	Ch    chan *PluginReport
 	ErrCh chan *error
 }
 

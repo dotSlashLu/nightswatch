@@ -8,7 +8,10 @@ import (
 	"log"
 )
 
-var cfg = &config{}
+var (
+	cfg *config
+	q nwqueue.NwQueue
+)
 
 func main() {
 	flags := parseFlags()
@@ -18,8 +21,8 @@ func main() {
 	cfg = parseConfig(flags.configFile)
 	fmt.Printf("read cfg: %+v\n", *cfg)
 	logger.Setup("/var/log/nwatch/test.log", 1024*1024)
-	q := initQueue()
-	loadPlugins(q)
+	q = initQueue()
+	loadPlugins()
 	fmt.Printf("%v\n", cfg)
 }
 
@@ -37,4 +40,3 @@ func initQueue() nwqueue.NwQueue {
 	log.Printf("inited mq %s\n", mqType)
 	return q
 }
-

@@ -17,4 +17,3 @@ func LoadPlugin(pluginName string, ch chan *ri.PluginReport,
 	}
 	go report(ch, errChan)
 }
-

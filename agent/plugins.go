@@ -1,13 +1,13 @@
 package main
 
 import (
-	"plugin"
 	"fmt"
-	"github.com/dotSlashLu/nightswatch/mq"
 	ri "github.com/dotSlashLu/nightswatch/raven_interface"
+	"plugin"
 )
 
-func loadPlugin(pluginName string, ch chan *ri.PluginReport, errChan chan *error) {
+func loadPlugin(pluginName string, ch chan *ri.PluginReport,
+	errChan chan *error) {
 	path := cfg.Plugins.Directory +
 		pluginName + ".so"
 	so, err := plugin.Open(path)
@@ -18,13 +18,14 @@ func loadPlugin(pluginName string, ch chan *ri.PluginReport, errChan chan *error
 	Report, err := so.Lookup("Report")
 	report, ok := Report.(func(chan *ri.PluginReport, chan *error))
 	if !ok {
-		fmt.Printf("Plugin %s not conforming to interface, ignoring\n", pluginName)
+		fmt.Printf("Plugin %s not conforming to interface, ignoring\n",
+			pluginName)
 		return
 	}
 	go report(ch, errChan)
 }
 
-func loadPlugins(q nwqueue.NwQueue) {
+func loadPlugins() {
 	plugins := cfg.Plugins
 	ch := make(chan *ri.PluginReport)
 	errCh := make(chan *error)
