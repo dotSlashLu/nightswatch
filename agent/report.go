@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-	"strconv"
 	ri "github.com/dotSlashLu/nightswatch/raven_interface"
+	"strconv"
 )
 
 func processReport(r *ri.Report) {
@@ -18,7 +18,7 @@ func processReport(r *ri.Report) {
 		fmt.Printf("report int k: %v, v: %v\n", r.Key, r.Value)
 		q.Push(r.Key, string(r.Value.(int)))
 	}
-	
+
 }
 
 func processReportRaw(rs *ri.PluginReport) {
@@ -32,7 +32,7 @@ func processReportRaw(rs *ri.PluginReport) {
 		report := rs.Report.(*ri.Report)
 		processReport(report)
 	default:
-		fmt.Printf("plugin %s reported with an unrecognized type", 
+		fmt.Printf("plugin %s reported with an unrecognized type",
 			rs.PluginName)
 	}
 }

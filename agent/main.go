@@ -10,7 +10,7 @@ import (
 
 var (
 	cfg *config
-	q nwqueue.NwQueue
+	q   nwqueue.NwQueue
 )
 
 func main() {
@@ -20,7 +20,7 @@ func main() {
 	}
 	cfg = parseConfig(flags.configFile)
 	fmt.Printf("read cfg: %+v\n", *cfg)
-	logger.Setup("/var/log/nwatch/test.log", 1024*1024)
+	logger.Setup(cfg.Log.Directory+"/test.log", 1024*1024)
 	q = initQueue()
 	loadPlugins()
 	fmt.Printf("%v\n", cfg)

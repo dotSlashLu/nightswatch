@@ -3,6 +3,7 @@ package logger
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"sync"
 	"time"
 )
@@ -18,8 +19,15 @@ type RotateWriter struct {
 func NewRotateWriter(filename string, sizeLimit int) (*RotateWriter, error) {
 	w := &RotateWriter{filename: filename, sizeLimit: sizeLimit}
 	logFileStat, err := os.Stat(filename)
+	// Log containing folder must be created beforehand
+	dir := filepath.Dir(filename)
+	_, err = os.Stat(dir)
+	if err != nil && os.IsNotExist(err) {
+		panic(fmt.Sprintf("Log directory %s does not exist", dir))
+	}
+	// It's ok if the folder exists but the file doesn't
 	if err != nil && !os.IsNotExist(err) {
-		panic(fmt.Sprintf("Can't stat log file %s: %s\n", 
+		panic(fmt.Sprintf("Can't stat log file %s: %s\n",
 			filename, err.Error()))
 	}
 	if logFileStat.Size() >= int64(sizeLimit) {

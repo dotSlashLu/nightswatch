@@ -15,23 +15,31 @@ type configPlugins struct {
 	Names     []string `toml:"names"`
 }
 
+type configLog struct {
+	Level     string `toml:"level"`
+	Directory string `toml:"dir"`
+}
+
 type config struct {
+	Log          configLog          `toml:"log"`
 	MessageQueue configMessageQueue `toml:"message_queue"`
 	Plugins      configPlugins      `toml:"plugins"`
 }
 
+func newConfig() *config {
+	c := new(config)
+	c.Log = configLog{Directory: "/var/log/nwatch"}
+	return c
+}
+
 func parseConfig(filename string) *config {
-	// file, err := os.Open(filename)
-	// if err != nil {
-	// 	panic("error reading config file " + filename + ", " + err.Error())
-	// }
 	fileContent, err := ioutil.ReadFile(filename)
 	if err != nil {
 		panic("error reading config file " + filename + ", " + err.Error())
 	}
-	cfg := config{}
-	if _, err = toml.Decode(string(fileContent), &cfg); err != nil {
+	cfg := newConfig()
+	if _, err = toml.Decode(string(fileContent), cfg); err != nil {
 		panic("error decoding config file: " + err.Error())
 	}
-	return &cfg
+	return cfg
 }
