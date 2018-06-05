@@ -11,7 +11,7 @@ type redisQueue struct {
 }
 
 type RedisConfig struct {
-	Members []string
+	Members  []string
 	QueueKey string `toml:"queue_key"`
 }
 

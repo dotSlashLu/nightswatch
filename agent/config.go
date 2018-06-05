@@ -3,15 +3,15 @@ package main
 import (
 	"fmt"
 	"github.com/BurntSushi/toml"
-	"io/ioutil"
 	nwqueue "github.com/dotSlashLu/nightswatch/mq"
+	"io/ioutil"
 )
 
 type configMessageQueue struct {
-	Type    string   `toml:"type"`
+	Type string `toml:"type"`
 
 	Redis toml.Primitive
-	Conf interface{}
+	Conf  interface{}
 }
 
 type configPlugins struct {
@@ -53,7 +53,7 @@ func parseConfig(filename string) *config {
 		err := md.PrimitiveDecode(cfg.MessageQueue.Redis, redisConf)
 		if err != nil {
 			panic("can't parse message_queue.redis: " + err.Error())
-	    }
+		}
 		cfg.MessageQueue.Conf = redisConf
 	}
 	return cfg
