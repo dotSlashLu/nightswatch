@@ -1,13 +1,17 @@
 package main
 
 import (
+	"fmt"
 	"github.com/BurntSushi/toml"
 	"io/ioutil"
+	nwqueue "github.com/dotSlashLu/nightswatch/mq"
 )
 
 type configMessageQueue struct {
 	Type    string   `toml:"type"`
-	Members []string `toml:"members"`
+
+	Redis toml.Primitive
+	Conf interface{}
 }
 
 type configPlugins struct {
@@ -38,8 +42,19 @@ func parseConfig(filename string) *config {
 		panic("error reading config file " + filename + ", " + err.Error())
 	}
 	cfg := newConfig()
-	if _, err = toml.Decode(string(fileContent), cfg); err != nil {
+	md, err := toml.Decode(string(fileContent), cfg)
+	if err != nil {
 		panic("error decoding config file: " + err.Error())
+	}
+	switch cfg.MessageQueue.Type {
+	case "redis":
+		redisConf := new(nwqueue.RedisConfig)
+		fmt.Printf("redisConf: %+v\n", redisConf)
+		err := md.PrimitiveDecode(cfg.MessageQueue.Redis, redisConf)
+		if err != nil {
+			panic("can't parse message_queue.redis: " + err.Error())
+	    }
+		cfg.MessageQueue.Conf = redisConf
 	}
 	return cfg
 }

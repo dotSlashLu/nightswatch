@@ -18,7 +18,6 @@ func processReport(r *ri.Report) {
 		fmt.Printf("report int k: %v, v: %v\n", r.Key, r.Value)
 		q.Push(r.Key, string(r.Value.(int)))
 	}
-
 }
 
 func processReportRaw(rs *ri.PluginReport) {

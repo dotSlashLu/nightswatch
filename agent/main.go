@@ -36,7 +36,7 @@ func banner() {
 
 func initQueue() nwqueue.NwQueue {
 	mqType := cfg.MessageQueue.Type
-	q := nwqueue.Init(mqType)
+	q := nwqueue.Init(mqType, cfg.MessageQueue.Conf)
 	log.Printf("inited mq %s\n", mqType)
 	return q
 }

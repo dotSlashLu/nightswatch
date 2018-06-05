@@ -1,0 +1,15 @@
+[log]
+level = ""
+dir = "/var/log/nwatch"
+
+[message_queue]
+type = "redis"
+
+	[message_queue.redis]
+	# messages will be distributed and consumed amoung members
+	members = ["127.0.0.1:6379"]
+	queue_key = "qk"
+
+[plugins]
+dir = "/var/lib/nwatch/"
+names = ["libvirt"]

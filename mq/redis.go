@@ -10,6 +10,11 @@ type redisQueue struct {
 	conn *redis.Client
 }
 
+type RedisConfig struct {
+	Members []string
+	QueueKey string `toml:"queue_key"`
+}
+
 func getClient() *redis.Client {
 	client := redis.NewClient(&redis.Options{
 		Addr:     "localhost:6379",
@@ -25,19 +30,19 @@ func getClient() *redis.Client {
 	return client
 }
 
-func redisGetQueue() *redisQueue {
+func redisGetQueue(cfg *RedisConfig) *redisQueue {
 	client := getClient()
 	return &redisQueue{"redis", client}
 }
 
 func (q *redisQueue) Push(k string, v string) bool {
-	// divide into m queues
+	// TODO: divide into m queues
 	q.conn.RPush(k, v)
 	return true
 }
 
 func (q *redisQueue) Pop(k string) string {
-	// divide into m queues
+	// TODO: divide into m queues
 	v, _ := q.conn.LPop(k).Result()
 	return v
 }
