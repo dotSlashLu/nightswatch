@@ -8,7 +8,7 @@ package nwqueue
 
 type NwQueue interface {
 	Push(string, string) bool
-	Pop(string) string
+	Pop() (string, string)
 }
 
 func Init(kind string, cfg interface{}) NwQueue {
