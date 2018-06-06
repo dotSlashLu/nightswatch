@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	ri "github.com/dotSlashLu/nightswatch/raven_interface"
+	ri "github.com/dotSlashLu/nightswatch/agent/raven_interface"
 	"strconv"
 )
 
