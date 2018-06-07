@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/BurntSushi/toml"
-	nwqueue "github.com/dotSlashLu/nightswatch/common/mq"
+	nwqueue "github.com/dotSlashLu/nightswatch/agent/message_queue"
 	"io/ioutil"
 )
 

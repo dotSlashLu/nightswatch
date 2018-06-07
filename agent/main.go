@@ -4,7 +4,7 @@ package main
 import (
 	"fmt"
 	"github.com/dotSlashLu/nightswatch/common/logger"
-	"github.com/dotSlashLu/nightswatch/common/mq"
+	"github.com/dotSlashLu/nightswatch/agent/message_queue"
 	"log"
 )
 

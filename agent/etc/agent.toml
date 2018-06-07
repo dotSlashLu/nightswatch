@@ -6,9 +6,11 @@ dir = "/var/log/nwatch"
 type = "redis"
 
 	[message_queue.redis]
+    etcd_endpoints = ["http://localhost:2379"]
+    etcd_dir = "/nw/redis-servers"
 	# messages will be distributed and consumed amoung members
-	members = ["127.0.0.1:6379", "localhost:6379", ":6379"]
-	queue_key = "qk"
+	# members = ["127.0.0.1:6379", "localhost:6379", ":6379"]
+	# queue_key = "qk"
 
 [plugins]
 dir = "/var/lib/nwatch/"
