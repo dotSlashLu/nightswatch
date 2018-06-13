@@ -8,10 +8,6 @@ type = "redis"
 	[message_queue.redis]
     etcd_endpoints = ["http://localhost:2379"]
     etcd_dir = "/nw/redis-servers"
-	# messages will be distributed and consumed amoung members
-	# members = ["127.0.0.1:6379", "localhost:6379", ":6379"]
+    # this agent will register and consume from these nodes
+	members = ["127.0.0.1:6379", "localhost:6379", ":6379"]
 	queue_key = "qk-etcd"
-
-[plugins]
-dir = "/var/lib/nwatch/"
-names = ["libvirt"]

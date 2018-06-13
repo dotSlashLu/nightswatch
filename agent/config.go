@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"github.com/BurntSushi/toml"
 	nwqueue "github.com/dotSlashLu/nightswatch/agent/message_queue"
 	"io/ioutil"
@@ -49,7 +48,6 @@ func parseConfig(filename string) *config {
 	switch cfg.MessageQueue.Type {
 	case "redis":
 		redisConf := new(nwqueue.RedisConfig)
-		fmt.Printf("redisConf: %+v\n", redisConf)
 		err := md.PrimitiveDecode(cfg.MessageQueue.Redis, redisConf)
 		if err != nil {
 			panic("can't parse message_queue.redis: " + err.Error())

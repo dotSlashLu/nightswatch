@@ -1,12 +1,12 @@
 package nwqueue
 
 import (
-	"time"
-	"fmt"
 	"context"
-	"github.com/go-redis/redis"
+	"fmt"
 	etcd "github.com/coreos/etcd/client"
+	"github.com/go-redis/redis"
 	"math/rand"
+	"time"
 )
 
 // separator between metric and value
@@ -23,9 +23,9 @@ type redisQueue struct {
 
 type RedisConfig struct {
 	EtcdEndpoints []string `toml:"etcd_endpoints"`
-	EtcdDir string `toml:"etcd_dir"`
-	Members  []string
-	QueueKey string `toml:"queue_key"`
+	EtcdDir       string   `toml:"etcd_dir"`
+	Members       []string
+	QueueKey      string `toml:"queue_key"`
 }
 
 func initRedisClient(addr, password string, db int) *redis.Client {
@@ -55,7 +55,7 @@ func initClientsByMembers(cfg *RedisConfig) redisClients {
 }
 
 func getEtcdAPI(endpoints []string) etcd.KeysAPI {
-	etcdCfg := etcd.Config {
+	etcdCfg := etcd.Config{
 		Endpoints: endpoints,
 		Transport: etcd.DefaultTransport,
 		// set timeout per request to fail fast

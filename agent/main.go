@@ -1,10 +1,11 @@
-// Agent of nightswatch monitoring
+// Agent of nightswatch monitor
+// Receivs raven(agent plugin) reports then push then to message queue
 package main
 
 import (
 	"fmt"
-	"github.com/dotSlashLu/nightswatch/common/logger"
 	"github.com/dotSlashLu/nightswatch/agent/message_queue"
+	"github.com/dotSlashLu/nightswatch/common/logger"
 	"log"
 )
 
