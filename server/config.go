@@ -3,18 +3,12 @@ package main
 import (
 	"github.com/BurntSushi/toml"
 	"io/ioutil"
+	"github.com/dotslashLu/nightswatch/server/message_queue"
 )
 
 type logConfig struct {
 	Level string
 	Dir   string
-}
-
-type redisConfig struct {
-	EtcdEndpoints []string `toml:"etcd_endpoints"`
-	EtcdDir       string   `toml:"etcd_dir"`
-	Members       []string `toml:"members"`
-	QueueKey      string   `toml:"queue_key"`
 }
 
 type messageQueueConfig struct {
@@ -45,7 +39,7 @@ func parseConfig(filename string) *config {
 	}
 	switch cfg.MessageQueue.Type {
 	case "redis":
-		redisConf := new(redisConfig)
+		redisConf := new(mq.RedisConfig)
 		err := md.PrimitiveDecode(cfg.MessageQueue.Redis, redisConf)
 		if err != nil {
 			panic("can't parse message_queue.redis: " + err.Error())

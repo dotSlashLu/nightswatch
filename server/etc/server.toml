@@ -8,6 +8,7 @@ type = "redis"
 	[message_queue.redis]
     etcd_endpoints = ["http://localhost:2379"]
     etcd_dir = "/nw/redis-servers"
+	etcd_ttl_ms = 1000
     # this agent will register and consume from these nodes
-	members = ["127.0.0.1:6379", "localhost:6379", ":6379"]
+    member = "127.0.0.1:6379"
 	queue_key = "qk-etcd"
