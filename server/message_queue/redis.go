@@ -4,26 +4,36 @@ import (
 	"context"
 	"fmt"
 	etcd "github.com/coreos/etcd/client"
-	"github.com/go-redis/redis"
-	"math/rand"
+	// "github.com/go-redis/redis"
+	// "math/rand"
 	"time"
 )
 
-type duration struct {
-	time.Duration
-}
-
-func (d *duration) UnmarshalText(text []byte) error {
-	d.Duration = time.Duration(nms) * time.Millisecond
-	return nil
-}
+// type duration struct {
+// 	time.Duration
+// }
+//
+// func (d *duration) UnmarshalText(text []byte) error {
+// 	if len(text) == 0 {
+// 		d.Duration = time.Duration(0)
+// 		return nil
+// 	}
+// 	i, err := strconv.Atoi(string(text))
+// 	if err != nil {
+// 		return err
+// 	}
+// 	d.Duration = time.Duration(i) * time.Millisecond
+// 	return nil
+// }
 
 type RedisConfig struct {
 	EtcdEndpoints []string `toml:"etcd_endpoints"`
 	EtcdDir       string   `toml:"etcd_dir"`
-	EtcdTTL       duration `toml:"etcd_ttl_ms"`
-	Member        []string `toml:"member"`
-	QueueKey      string   `toml:"queue_key"`
+	// EtcdTTL       duration `toml:"etcd_ttl_ms"`
+	EtcdTTLStr string `toml:"etcd_ttl_ms"`
+	EtcdTTL    time.Duration
+	Member     string `toml:"member"`
+	QueueKey   string `toml:"queue_key"`
 }
 
 func getEtcdAPI(endpoints []string) etcd.KeysAPI {
@@ -42,30 +52,56 @@ func getEtcdAPI(endpoints []string) etcd.KeysAPI {
 	return api
 }
 
-func registerConsumer() error {
-	etcdAPI = getEtcdAPI(redisConf.EtcdEndpoints)
-	setOpt = &etcd.SetOptions{TTL: redisConf.EtcdTTL}
-	resp, err := etcdAPI.Set(context.Background(), redisConf.EtcdDir,
-		redisConf.Member, setOpt)
+func registerConsumerOneShot(redisConf *RedisConfig) error {
+	return registerConsumer(redisConf, false)
+}
+
+func registerConsumerKeepAlive(redisConf *RedisConfig) error {
+	registerConsumer(redisConf, true)
+	ticker := time.NewTicker(redisConf.EtcdTTL)
+	defer ticker.Stop()
+	// poll
+	for {
+		fmt.Printf("ttl: %+v\n", redisConf.EtcdTTL)
+		fmt.Println("waiting for report")
+		_ = <-ticker.C
+		fmt.Printf("register consumer for ttl %d\n",
+			int(redisConf.EtcdTTL))
+		registerConsumer(redisConf, true)
+	}
 	return nil
 }
 
-func RegisterConsumer(redisConf RedisConfig) error {
-	if !redisConf.EtcdEndpoints {
-		if redisConf.EtcdDir || redisConf.EtcdTTL {
+func registerConsumer(redisConf *RedisConfig, ttl bool) error {
+	etcdAPI := getEtcdAPI(redisConf.EtcdEndpoints)
+	var setOpt *etcd.SetOptions
+	if ttl {
+		setOpt = &etcd.SetOptions{TTL: redisConf.EtcdTTL}
+	}
+	_, err := etcdAPI.Set(context.Background(), redisConf.EtcdDir,
+		redisConf.Member, setOpt)
+	return err
+}
+
+func RegisterConsumer(redisConf *RedisConfig) error {
+	if redisConf.EtcdEndpoints == nil {
+		if redisConf.EtcdDir != "" || redisConf.EtcdTTLStr != "" {
 			// TODO Warning: no etcd endpoints configured but got other etcd
 			// configurations
 		}
 		return nil
 	}
 
-	if !redisConf.EtcdDir {
+	if redisConf.EtcdDir == "" {
 		panic("etcd configured, but no etcd dir")
 	}
 
-	// ignore <= 0
 	immediate := time.Duration(0) * time.Millisecond
-	if redisConf.EtcdTTL > immediate {
+	// if ttl <= 0, one-shot register
+	if redisConf.EtcdTTL <= immediate {
+		registerConsumerOneShot(redisConf)
+	} else {
+		registerConsumerKeepAlive(redisConf)
 	}
+	return nil
 }
-

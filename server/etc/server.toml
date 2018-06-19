@@ -6,9 +6,23 @@ dir = "/var/log/nwatch"
 type = "redis"
 
 	[message_queue.redis]
+	# optional etcd configs
+	# if configured, the consumer will register it's consuming queue to the
+	# etcd cluster to let agents know where to push to.
+	# Agents should also be configured to read from this etcd cluster for
+	# target queues.
+	# if unconfigured, agents should be configured directly with queue
+	# addresses
     etcd_endpoints = ["http://localhost:2379"]
     etcd_dir = "/nw/redis-servers"
-	etcd_ttl_ms = 1000
-    # this agent will register and consume from these nodes
+	etcd_ttl_ms = "1000"
+
+    # this agent will register and consume from this node
+	# if etcd is not used, fill this directly to agents' config
     member = "127.0.0.1:6379"
 	queue_key = "qk-etcd"
+
+	# the interval the consumer retrives data from the queue. Increasing this
+	# value will help to increase the throughput.
+	# But if your cluster is busy, decrease this value to reduce the latency.
+	interval = 1000

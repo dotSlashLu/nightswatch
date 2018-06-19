@@ -1,9 +1,12 @@
 package main
 
 import (
+	"fmt"
 	"github.com/BurntSushi/toml"
+	"github.com/dotSlashLu/nightswatch/server/message_queue"
 	"io/ioutil"
-	"github.com/dotslashLu/nightswatch/server/message_queue"
+	"strconv"
+	"time"
 )
 
 type logConfig struct {
@@ -44,9 +47,20 @@ func parseConfig(filename string) *config {
 		if err != nil {
 			panic("can't parse message_queue.redis: " + err.Error())
 		}
+		// parse redisConf.EtcdTTLStr to redisConf.EtcdTTL as time.Duration
+		// not using UnmarshalText because we have to tell from 0 and empty
+		if redisConf.EtcdTTLStr != "" {
+			i, err := strconv.Atoi(redisConf.EtcdTTLStr)
+			if err != nil {
+				panic(fmt.Sprintf("can't parse config field etcd_ttl_ms, %s",
+					err))
+			}
+			redisConf.EtcdTTL = time.Duration(i) * time.Millisecond
+		}
 		cfg.MessageQueue.Conf = redisConf
 	default:
-		panic("unrecognized message queue type " + cfg.MessageQueue.Type)
+		panic("unrecognized message queue type " + cfg.MessageQueue.Type +
+			" in configuration")
 	}
 	return cfg
 }
