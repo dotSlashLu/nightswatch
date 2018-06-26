@@ -118,10 +118,3 @@ func (q *redisQueue) Push(k string, v string) bool {
 	fmt.Printf("push %v to key %v\n", kvp, q.cfg.QueueKey)
 	return true
 }
-
-// func (q *redisQueue) Pop() (string, string) {
-// 	v, _ := q.getConn().LPop(q.cfg.QueueKey).Result()
-// 	kvp := strings.Split(v, sep)
-// 	k, v := kvp[0], kvp[1]
-// 	return k, v
-// }

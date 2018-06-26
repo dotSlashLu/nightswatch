@@ -3,36 +3,21 @@ package mq
 import (
 	"context"
 	"fmt"
+	"strings"
 	etcd "github.com/coreos/etcd/client"
-	// "github.com/go-redis/redis"
-	// "math/rand"
+	"github.com/go-redis/redis"
 	"time"
 )
 
-// type duration struct {
-// 	time.Duration
-// }
-//
-// func (d *duration) UnmarshalText(text []byte) error {
-// 	if len(text) == 0 {
-// 		d.Duration = time.Duration(0)
-// 		return nil
-// 	}
-// 	i, err := strconv.Atoi(string(text))
-// 	if err != nil {
-// 		return err
-// 	}
-// 	d.Duration = time.Duration(i) * time.Millisecond
-// 	return nil
-// }
+// separator between metric and value
+const sep = "·=·"
 
 type RedisConfig struct {
 	EtcdEndpoints []string `toml:"etcd_endpoints"`
 	EtcdDir       string   `toml:"etcd_dir"`
-	// EtcdTTL       duration `toml:"etcd_ttl_ms"`
 	EtcdTTLStr string `toml:"etcd_ttl_ms"`
 	EtcdTTL    time.Duration
-	Member     string `toml:"member"`
+	Addr       string `toml:"addr"`
 	QueueKey   string `toml:"queue_key"`
 }
 
@@ -79,11 +64,12 @@ func registerConsumer(redisConf *RedisConfig, ttl bool) error {
 		setOpt = &etcd.SetOptions{TTL: redisConf.EtcdTTL}
 	}
 	_, err := etcdAPI.Set(context.Background(), redisConf.EtcdDir,
-		redisConf.Member, setOpt)
+		redisConf.Addr, setOpt)
 	return err
 }
 
-func RegisterConsumer(redisConf *RedisConfig) error {
+func RegisterConsumer(q *redisQueue) error {
+	redisConf := q.cfg
 	if redisConf.EtcdEndpoints == nil {
 		if redisConf.EtcdDir != "" || redisConf.EtcdTTLStr != "" {
 			// TODO Warning: no etcd endpoints configured but got other etcd
@@ -105,3 +91,41 @@ func RegisterConsumer(redisConf *RedisConfig) error {
 	}
 	return nil
 }
+
+func initRedisClient(addr, password string, db int) *redis.Client {
+	client := redis.NewClient(&redis.Options{
+		Addr:     addr,
+		Password: password,
+		DB:       db,
+	})
+
+	_, err := client.Ping().Result()
+	if err != nil {
+		panic(fmt.Sprintf("Can't connect to redis: %v", err))
+	}
+	return client
+}
+
+type redisQueue struct {
+	cfg     *RedisConfig
+	conn    *redis.Client
+}
+
+func New(config *RedisConfig) *redisQueue {
+	q := &redisQueue{ cfg: config }
+	client := initRedisClient(config.Addr, "", 0)
+	q.conn = client
+	return q
+}
+
+func (q *redisQueue) StartConsume() {
+	RegisterConsumer(q)
+}
+
+func (q *redisQueue) Pop() (string, string) {
+	v, _ := q.conn.LPop(q.cfg.QueueKey).Result()
+	kvp := strings.Split(v, sep)
+	k, v := kvp[0], kvp[1]
+	return k, v
+}
+
