@@ -3,22 +3,44 @@ package mq
 import (
 	"context"
 	"fmt"
-	"strings"
 	etcd "github.com/coreos/etcd/client"
 	"github.com/go-redis/redis"
+	"strconv"
+	"strings"
 	"time"
 )
 
 // separator between metric and value
 const sep = "·=·"
 
+type consumeInterval struct {
+	duration time.Duration
+}
+
+type redisQueue struct {
+	cfg     *RedisConfig
+	conn    *redis.Client
+	etcdAPI etcd.KeysAPI
+}
+
+func (interval *consumeInterval) UnmarshalText(text []byte) error {
+	i, err := strconv.Atoi(string(text))
+	if err != nil {
+		return err
+	}
+	interval.duration = time.Duration(i) * time.Millisecond
+	fmt.Printf("parsing interval text: %s, val: %v\n", string(text), interval.duration)
+	return nil
+}
+
 type RedisConfig struct {
-	EtcdEndpoints []string `toml:"etcd_endpoints"`
-	EtcdDir       string   `toml:"etcd_dir"`
-	EtcdTTLStr string `toml:"etcd_ttl_ms"`
-	EtcdTTL    time.Duration
-	Addr       string `toml:"addr"`
-	QueueKey   string `toml:"queue_key"`
+	EtcdEndpoints   []string `toml:"etcd_endpoints"`
+	EtcdDir         string   `toml:"etcd_dir"`
+	EtcdTTLStr      string   `toml:"etcd_ttl_ms"`
+	EtcdTTL         time.Duration
+	Addr            string           `toml:"addr"`
+	QueueKey        string           `toml:"queue_key"`
+	ConsumeInterval *consumeInterval `toml:"consume_interval"`
 }
 
 func getEtcdAPI(endpoints []string) etcd.KeysAPI {
@@ -37,38 +59,41 @@ func getEtcdAPI(endpoints []string) etcd.KeysAPI {
 	return api
 }
 
-func registerConsumerOneShot(redisConf *RedisConfig) error {
-	return registerConsumer(redisConf, false)
+func registerConsumerOneShot(q *redisQueue) error {
+	return registerConsumer(q, false)
 }
 
-func registerConsumerKeepAlive(redisConf *RedisConfig) error {
-	registerConsumer(redisConf, true)
-	ticker := time.NewTicker(redisConf.EtcdTTL)
+func registerConsumerKeepAlive(q *redisQueue, firstReg chan bool) error {
+	registerConsumer(q, true)
+	firstReg <- true
+	ticker := time.NewTicker(q.cfg.EtcdTTL)
 	defer ticker.Stop()
 	// poll
 	for {
-		fmt.Printf("ttl: %+v\n", redisConf.EtcdTTL)
-		fmt.Println("waiting for report")
 		_ = <-ticker.C
-		fmt.Printf("register consumer for ttl %d\n",
-			int(redisConf.EtcdTTL))
-		registerConsumer(redisConf, true)
+		fmt.Printf("register consumer for ttl %s\n",
+			q.cfg.EtcdTTL)
+		registerConsumer(q, true)
 	}
 	return nil
 }
 
-func registerConsumer(redisConf *RedisConfig, ttl bool) error {
-	etcdAPI := getEtcdAPI(redisConf.EtcdEndpoints)
+func registerConsumer(q *redisQueue, ttl bool) error {
+	etcdAPI := q.etcdAPI
+	redisConf := q.cfg
 	var setOpt *etcd.SetOptions
 	if ttl {
 		setOpt = &etcd.SetOptions{TTL: redisConf.EtcdTTL}
 	}
-	_, err := etcdAPI.Set(context.Background(), redisConf.EtcdDir,
-		redisConf.Addr, setOpt)
+	//_, err := etcdAPI.Set(context.Background(), redisConf.EtcdDir,
+	//	redisConf.Addr, setOpt)
+	key := redisConf.EtcdDir + "/" + redisConf.Addr
+	_, err := etcdAPI.Set(context.Background(), key,
+		"", setOpt)
 	return err
 }
 
-func RegisterConsumer(q *redisQueue) error {
+func RegisterConsumer(q *redisQueue, firstReg chan bool) error {
 	redisConf := q.cfg
 	if redisConf.EtcdEndpoints == nil {
 		if redisConf.EtcdDir != "" || redisConf.EtcdTTLStr != "" {
@@ -85,9 +110,10 @@ func RegisterConsumer(q *redisQueue) error {
 	immediate := time.Duration(0) * time.Millisecond
 	// if ttl <= 0, one-shot register
 	if redisConf.EtcdTTL <= immediate {
-		registerConsumerOneShot(redisConf)
+		registerConsumerOneShot(q)
+		firstReg <- true
 	} else {
-		registerConsumerKeepAlive(redisConf)
+		registerConsumerKeepAlive(q, firstReg)
 	}
 	return nil
 }
@@ -106,26 +132,55 @@ func initRedisClient(addr, password string, db int) *redis.Client {
 	return client
 }
 
-type redisQueue struct {
-	cfg     *RedisConfig
-	conn    *redis.Client
-}
-
 func New(config *RedisConfig) *redisQueue {
-	q := &redisQueue{ cfg: config }
+	q := &redisQueue{cfg: config}
 	client := initRedisClient(config.Addr, "", 0)
 	q.conn = client
+	q.etcdAPI = getEtcdAPI(config.EtcdEndpoints)
 	return q
 }
 
 func (q *redisQueue) StartConsume() {
-	RegisterConsumer(q)
+	firstReg := make(chan bool)
+	go RegisterConsumer(q, firstReg)
+	<-firstReg
+	close(firstReg)
+	fmt.Println("first reg done")
+	fmt.Printf("cosume interval: %+v\n", q.cfg.ConsumeInterval.duration)
+	ticker := time.NewTicker(q.cfg.ConsumeInterval.duration)
+	defer ticker.Stop()
+	for {
+		<-ticker.C
+		// k, v := q.Pop()
+		// fmt.Println("poped", k, v)
+		records := q.pop()
+		for _, r := range records {
+			kvp := strings.Split(r, sep)
+			k, v := kvp[0], kvp[1]
+			fmt.Println("processed", k, v)
+		}
+		q.trim(int64(len(records)))
+	}
 }
 
-func (q *redisQueue) Pop() (string, string) {
-	v, _ := q.conn.LPop(q.cfg.QueueKey).Result()
-	kvp := strings.Split(v, sep)
-	k, v := kvp[0], kvp[1]
-	return k, v
+func (q *redisQueue) pop() []string {
+	v, err := q.conn.LRange(q.cfg.QueueKey, 0, -1).Result()
+	if err != nil {
+		// this just means no value to pop
+		if err.Error() == "redis: nil" {
+			return []string{}
+		}
+		panic(err)
+	}
+	fmt.Printf("redis result: %+v", v)
+	return v
 }
 
+// trims pop-ed values after processing
+func (q *redisQueue) trim(n int64) {
+	res, err := q.conn.LTrim(q.cfg.QueueKey, n, -1).Result()
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println("trimed", res, err)
+}

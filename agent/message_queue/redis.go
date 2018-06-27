@@ -6,6 +6,7 @@ import (
 	etcd "github.com/coreos/etcd/client"
 	"github.com/go-redis/redis"
 	"math/rand"
+	"strings"
 	"time"
 )
 
@@ -79,13 +80,17 @@ func initClientsByEtcd(cfg *RedisConfig) redisClients {
 		panic("failed to get " + cfg.EtcdDir + " from etcd error: " +
 			err.Error())
 	}
+	fmt.Printf("%+v\n", resp.Node)
 	if len(resp.Node.Nodes) < 1 {
 		panic("No redis server found in etcd")
 	}
 	fmt.Printf("got dir: %+v\n", resp.Node.Nodes)
 	clients := make([]*redis.Client, len(resp.Node.Nodes))
 	for i := range resp.Node.Nodes {
-		clients[i] = initRedisClient(resp.Node.Nodes[i].Value, "", 0)
+		s := strings.Split(resp.Node.Nodes[i].Key, "/")
+		addr := s[len(s)-1]
+		fmt.Println("got addr", addr)
+		clients[i] = initRedisClient(addr, "", 0)
 	}
 	return clients
 }

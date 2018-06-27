@@ -21,8 +21,7 @@ type = "redis"
     # if etcd is not used, fill this directly to agents' config
     addr = "127.0.0.1:6379"
     queue_key = "qk-etcd"
-
-    # the interval the consumer retrives data from the queue. Increasing this
-    # value will help to increase the throughput.
+    # the interval of the consumer retrives data from the queue. Increasing
+    # this value will help to increase the throughput.
     # But if your cluster is busy, decrease this value to reduce the latency.
-    interval = 1000
+    consume_interval = 1000
