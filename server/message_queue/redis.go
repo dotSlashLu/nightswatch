@@ -29,7 +29,6 @@ func (interval *consumeInterval) UnmarshalText(text []byte) error {
 		return err
 	}
 	interval.duration = time.Duration(i) * time.Millisecond
-	fmt.Printf("parsing interval text: %s, val: %v\n", string(text), interval.duration)
 	return nil
 }
 
@@ -132,7 +131,7 @@ func initRedisClient(addr, password string, db int) *redis.Client {
 	return client
 }
 
-func New(config *RedisConfig) *redisQueue {
+func newRedis(config *RedisConfig) *redisQueue {
 	q := &redisQueue{cfg: config}
 	client := initRedisClient(config.Addr, "", 0)
 	q.conn = client
@@ -151,8 +150,6 @@ func (q *redisQueue) StartConsume() {
 	defer ticker.Stop()
 	for {
 		<-ticker.C
-		// k, v := q.Pop()
-		// fmt.Println("poped", k, v)
 		records := q.pop()
 		for _, r := range records {
 			kvp := strings.Split(r, sep)

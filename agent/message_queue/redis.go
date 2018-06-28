@@ -82,7 +82,10 @@ func initClientsByEtcd(cfg *RedisConfig) redisClients {
 	}
 	fmt.Printf("%+v\n", resp.Node)
 	if len(resp.Node.Nodes) < 1 {
-		panic("No redis server found in etcd")
+		err := fmt.Sprintf("No redis server found in etcd under dir %s\n"+
+			"Is there any server configured with the same etcd cluster and "+
+			"dir running?", cfg.EtcdDir)
+		panic(err)
 	}
 	fmt.Printf("got dir: %+v\n", resp.Node.Nodes)
 	clients := make([]*redis.Client, len(resp.Node.Nodes))

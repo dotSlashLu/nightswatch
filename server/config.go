@@ -15,10 +15,8 @@ type logConfig struct {
 }
 
 type messageQueueConfig struct {
-	Type string `toml:"type"`
-
+	Type  string `toml:"type"`
 	Redis toml.Primitive
-
 	// holds what ever message queue conf Type specified parsed from the above
 	// type defs
 	Conf interface{}
@@ -26,7 +24,7 @@ type messageQueueConfig struct {
 
 type config struct {
 	Log          logConfig
-	MessageQueue messageQueueConfig `toml:"message_queue"`
+	MessageQueue mq.Config `toml:"message_queue"`
 }
 
 func parseConfig(filename string) *config {

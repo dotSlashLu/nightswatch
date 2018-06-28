@@ -15,6 +15,6 @@ func main() {
 	banner()
 	cfg = parseConfig("./etc/server.toml")
 	fmt.Printf("read config %+v\n", cfg)
-	queue := mq.New(cfg.MessageQueue.Conf.(*mq.RedisConfig))
+	queue := mq.New(cfg.MessageQueue)
 	queue.StartConsume()
 }
