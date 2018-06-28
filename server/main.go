@@ -12,8 +12,9 @@ func banner() {
 var cfg *config
 
 func main() {
+	flags := parseFlags()
 	banner()
-	cfg = parseConfig("./etc/server.toml")
+	cfg = parseConfig(flags.configFile)
 	fmt.Printf("read config %+v\n", cfg)
 	queue := mq.New(cfg.MessageQueue)
 	queue.StartConsume()

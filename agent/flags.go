@@ -4,6 +4,8 @@ import (
 	"flag"
 )
 
+const defaultConfigFile = "/etc/nwatch/agent.toml"
+
 type flags struct {
 	configFile string
 	quiet      bool
@@ -11,7 +13,6 @@ type flags struct {
 
 func parseFlags() *flags {
 	f := flags{}
-	defaultConfigFile := "/etc/nwatch/agent.toml"
 	flag.StringVar(&f.configFile, "c", defaultConfigFile,
 		"path to config file")
 	flag.BoolVar(&f.quiet, "q", false, "quiet output")

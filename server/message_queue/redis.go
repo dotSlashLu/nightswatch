@@ -92,7 +92,7 @@ func registerConsumer(q *redisQueue, ttl bool) error {
 	return err
 }
 
-func RegisterConsumer(q *redisQueue, firstReg chan bool) error {
+func etcdRegister(q *redisQueue, firstReg chan bool) error {
 	redisConf := q.cfg
 	if redisConf.EtcdEndpoints == nil {
 		if redisConf.EtcdDir != "" || redisConf.EtcdTTLStr != "" {
@@ -141,7 +141,7 @@ func newRedis(config *RedisConfig) *redisQueue {
 
 func (q *redisQueue) StartConsume() {
 	firstReg := make(chan bool)
-	go RegisterConsumer(q, firstReg)
+	go etcdRegister(q, firstReg)
 	<-firstReg
 	close(firstReg)
 	fmt.Println("first reg done")
