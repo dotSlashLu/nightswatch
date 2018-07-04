@@ -153,8 +153,12 @@ func (q *redisQueue) StartConsume() {
 		records := q.pop()
 		for _, r := range records {
 			kvp := strings.Split(r, sep)
-			k, v := kvp[0], kvp[1]
-			fmt.Println("processed", k, v)
+			if len(kvp) < 3 {
+				// TODO: warn message format not right
+				continue
+			}
+			k, v, t := kvp[0], kvp[1], kvp[2]
+			fmt.Println("processed", k, v, t)
 		}
 		q.trim(int64(len(records)))
 	}

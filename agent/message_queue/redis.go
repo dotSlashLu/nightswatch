@@ -4,8 +4,10 @@ import (
 	"context"
 	"fmt"
 	etcd "github.com/coreos/etcd/client"
+	"github.com/dotSlashLu/nightswatch/agent/util"
 	"github.com/go-redis/redis"
 	"math/rand"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -121,7 +123,9 @@ func (q *redisQueue) getConn() *redis.Client {
 }
 
 func (q *redisQueue) Push(k string, v string) bool {
-	kvp := fmt.Sprintf("%s%s%s", k, sep, v)
+	kvp := strings.Join([]string{util.GetClientID(), k, v,
+		strconv.FormatInt(time.Now().Unix(), 10),
+	}, sep)
 	q.getConn().RPush(q.cfg.QueueKey, kvp)
 	fmt.Printf("push %v to key %v\n", kvp, q.cfg.QueueKey)
 	return true

@@ -5,8 +5,10 @@ package main
 import (
 	"fmt"
 	"github.com/dotSlashLu/nightswatch/agent/message_queue"
+	"github.com/dotSlashLu/nightswatch/agent/util"
 	"github.com/dotSlashLu/nightswatch/common/logger"
 	"log"
+	"path/filepath"
 )
 
 var (
@@ -22,13 +24,10 @@ func main() {
 	cfg = parseConfig(flags.configFile)
 	fmt.Printf("read cfg: %+v\n", *cfg)
 	logger.Setup(cfg.Log.Directory+"/test.log", 1024*1024)
+	util.GenerateClientID(filepath.Dir(flags.configFile))
 	q = initQueue()
 	loadPlugins()
 	fmt.Printf("%v\n", cfg)
-}
-
-func init() {
-	clientID()
 }
 
 func banner() {

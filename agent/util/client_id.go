@@ -1,4 +1,4 @@
-package main
+package util
 
 import (
 	"fmt"
@@ -8,9 +8,9 @@ import (
 	"os"
 )
 
-const confDir = "/etc/nwatch"
+var ClientID string
 
-func persistMachineID(machineID []byte) {
+func persistMachineID(confDir string, machineID []byte) {
 	log.Printf("persisting machine id %v", machineID)
 	err := ioutil.WriteFile(confDir+"/.machine_id", machineID, 0600)
 	if err != nil {
@@ -23,7 +23,7 @@ func generateUUID() []byte {
 	return []byte(uuid.String())
 }
 
-func generateMachineID() []byte {
+func generateMachineID(confDir string) []byte {
 	machineID := []byte{}
 	if _, err := os.Stat("/etc/machine-id"); os.IsNotExist(err) {
 		machineID = generateUUID()
@@ -33,7 +33,7 @@ func generateMachineID() []byte {
 			panic(fmt.Sprintf("Failed to get machine id %v", err.Error()))
 		}
 	}
-	persistMachineID(machineID)
+	persistMachineID(confDir, machineID)
 	return machineID
 }
 
@@ -41,11 +41,16 @@ func generateMachineID() []byte {
 // if not exist, use /etc/machine-id if possible
 // otherwise generate a new UUID
 // and write into `cfg.ConfigPath/.machine_id'
-func clientID() string {
+func GenerateClientID(confDir string) {
 	machineID, err := ioutil.ReadFile(confDir + "/.machine_id")
 	if err != nil {
 		fmt.Println("error reading machine id")
-		machineID = generateMachineID()
+		machineID = generateMachineID(confDir)
 	}
-	return string(machineID[:])
+	ClientID = string(machineID[:len(machineID)-1])
+	fmt.Println("generated ClientID", ClientID)
+}
+
+func GetClientID() string {
+	return ClientID
 }
