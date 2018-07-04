@@ -4,7 +4,7 @@ import (
 	"flag"
 )
 
-const defaultConfgFile = "/etc/nwatch/server.toml"
+const defaultFile = "/etc/nwatch/server.toml"
 
 type flags struct {
 	configFile string
@@ -12,7 +12,7 @@ type flags struct {
 
 func parseFlags() *flags {
 	f := flags{}
-	flag.StringVar(&f.configFile, "c", defaultConfgFile,
+	flag.StringVar(&f.configFile, "c", defaultFile,
 		"path to config file")
 	flag.Parse()
 	return &f

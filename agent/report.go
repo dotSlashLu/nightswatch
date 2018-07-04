@@ -16,7 +16,7 @@ func processReport(r *ri.Report) {
 		q.Push(r.Key, strconv.FormatFloat(r.Value.(float64), 'f', 6, 64))
 	case ri.ReportValInt:
 		fmt.Printf("report int k: %v, v: %v\n", r.Key, r.Value)
-		q.Push(r.Key, string(r.Value.(int)))
+		q.Push(r.Key, strconv.Itoa(r.Value.(int)))
 	}
 }
 

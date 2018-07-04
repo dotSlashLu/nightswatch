@@ -5,7 +5,7 @@ dir = "/var/log/nwatch"
 [message_queue]
 type = "redis"
 
-[message_queue.redis]
+    [message_queue.redis]
     # optional etcd configs
     # if configured, the consumer will register it's consuming queue to the
     # etcd cluster to let agents know where to push to.
@@ -20,8 +20,14 @@ type = "redis"
     # this agent will register and consume from this node
     # if etcd is not used, fill this directly to agents' config
     addr = "127.0.0.1:6379"
-    queue_key = "qk-etcd"
+    queue_key = "nw-metrics"
     # the interval of the consumer retrives data from the queue. Increasing
     # this value will help to increase the throughput.
     # But if your cluster is busy, decrease this value to reduce the latency.
     consume_interval = 1000
+
+[store]
+type = "mysql"
+
+    [store.mysql]
+    uri = "user:password@tcp(localhost)/nw_metrics"

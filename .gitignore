@@ -1,3 +1,7 @@
 *.so
+
 agent/agent
+agent/etc/agent-test.toml
+
 server/server
+server/etc/server-test.toml
